@@ -4,27 +4,27 @@ import Link from 'next/link';
 import CartIcon from './CartIcon';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { Product } from '../../types/product'; // Importando o tipo Product
-import SearchBar from './SearchBar'; // Novo componente que vamos criar
+import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon, UserIcon } from '@heroicons/react/24/outline';
+import { Product } from '../../types/product';
+import SearchBar from './SearchBar';
+import { useAuthContext } from '../providers/AuthProvider';
 
 interface HeaderProps {
-  products: Product[]; // Adicionamos a prop de produtos
+  products: Product[];
 }
 
 export default function Header({ products }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false); // Estado para controle da busca mobile
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuthContext();
 
-  // Fechar menus quando navegar
   useEffect(() => {
     setIsOpen(false);
     setSearchOpen(false);
   }, [pathname]);
 
-  // Efeito de scroll
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -45,7 +45,7 @@ export default function Header({ products }: HeaderProps) {
 
           {/* Barra de Busca (Desktop) */}
           <div className="hidden md:flex flex-1 mx-6 max-w-xl">
-            <SearchBar  />
+            <SearchBar />
           </div>
 
           {/* Menu Desktop */}
@@ -75,7 +75,42 @@ export default function Header({ products }: HeaderProps) {
                   Produtos
                 </Link>
               </li>
-              <li className="ml-4">
+              
+              {/* Área de Autenticação Desktop */}
+              {user ? (
+                <li className="relative group">
+                  <button className="flex items-center space-x-1 hover:text-blue-200">
+                    <UserIcon className="h-5 w-5" />
+                    <span>{user.email}</span>
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-md shadow-lg py-1 hidden group-hover:block">
+                    <Link 
+                      href="/profile" 
+                      className="block px-4 py-2 hover:bg-blue-50"
+                    >
+                      Meu Perfil
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-4 py-2 hover:bg-blue-50"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                </li>
+              ) : (
+                <li>
+                  <Link 
+                    href="/auth" 
+                    className="flex items-center space-x-1 hover:text-blue-200"
+                  >
+                    <UserIcon className="h-5 w-5" />
+                    <span>Entrar</span>
+                  </Link>
+                </li>
+              )}
+              
+              <li>
                 <CartIcon />
               </li>
             </ul>
@@ -140,6 +175,37 @@ export default function Header({ products }: HeaderProps) {
                   Produtos
                 </Link>
               </li>
+              
+              {/* Área de Autenticação Mobile */}
+              {user ? (
+                <>
+                  <li>
+                    <Link 
+                      href="/profile" 
+                      className={`block py-2 ${pathname === '/profile' ? 'font-bold bg-blue-500 rounded px-3' : 'hover:bg-blue-500 hover:rounded px-3'}`}
+                    >
+                      Meu Perfil
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={logout}
+                      className="w-full text-left py-2 hover:bg-blue-500 hover:rounded px-3"
+                    >
+                      Sair
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <li>
+                  <Link 
+                    href="/auth" 
+                    className={`block py-2 ${pathname === '/auth' ? 'font-bold bg-blue-500 rounded px-3' : 'hover:bg-blue-500 hover:rounded px-3'}`}
+                  >
+                    Entrar / Registrar
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         )}

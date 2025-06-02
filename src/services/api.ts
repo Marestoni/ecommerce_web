@@ -1,5 +1,5 @@
 // src/services/api.ts
-const API_BASE_URL =  'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:8080';
 
 interface ApiResponse<T> {
   data: T;
@@ -8,14 +8,29 @@ interface ApiResponse<T> {
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Obter o token do sessionStorage
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  // Adicionar o token ao header se existir
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     ...options,
   });
 
   if (!response.ok) {
+    // Se for 401 Unauthorized, remover o token inválido
+    if (response.status === 401) {
+      sessionStorage.removeItem('token');
+    }
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
@@ -24,10 +39,22 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
 }
 
 export const api = {
-  get: <T>(endpoint: string) => fetchApi<T>(endpoint),
-  post: <T>(endpoint: string, body: object) => 
-    fetchApi<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(endpoint: string, body: object) => 
-    fetchApi<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(endpoint: string) => fetchApi<T>(endpoint, { method: 'DELETE' }),
+  get: <T>(endpoint: string, options?: RequestInit) => fetchApi<T>(endpoint, options),
+  post: <T>(endpoint: string, body: object, options?: RequestInit) => 
+    fetchApi<T>(endpoint, { 
+      method: 'POST', 
+      body: JSON.stringify(body),
+      ...options 
+    }),
+  put: <T>(endpoint: string, body: object, options?: RequestInit) => 
+    fetchApi<T>(endpoint, { 
+      method: 'PUT', 
+      body: JSON.stringify(body),
+      ...options 
+    }),
+  delete: <T>(endpoint: string, options?: RequestInit) => 
+    fetchApi<T>(endpoint, { 
+      method: 'DELETE',
+      ...options 
+    }),
 };
