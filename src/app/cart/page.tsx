@@ -3,6 +3,9 @@
 import { useCart } from '../providers/CartProvider';
 import CartItem from '../components/CartItem';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '../providers/AuthProvider';
+import { useEffect } from 'react';
 
 export default function CartPage() {
   const { 
@@ -13,6 +16,20 @@ export default function CartPage() {
     totalItems, 
     totalPrice 
   } = useCart();
+  
+  const router = useRouter();
+  const { user } = useAuthContext();
+
+  const handleCheckout = () => {
+    if (!user) {
+      // Redireciona para login e guarda a página atual para voltar depois
+      router.push(`/auth?redirect=${encodeURIComponent('/cart')}`);
+      return;
+    }
+    // Lógica para prosseguir com o checkout
+    router.push('/checkout');
+  };
+
   if (totalItems === 0) {
     return (
       <div className="container mx-auto py-12 text-center">
@@ -74,9 +91,18 @@ export default function CartPage() {
               </div>
             </div>
             
-            <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors">
+            <button 
+              onClick={handleCheckout}
+              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors"
+            >
               Finalizar Compra
             </button>
+
+            {!user && (
+              <p className="mt-3 text-sm text-gray-600 text-center">
+                Você precisa estar logado para finalizar a compra
+              </p>
+            )}
           </div>
         </div>
       </div>

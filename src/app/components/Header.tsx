@@ -17,6 +17,8 @@ export default function Header({ products }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [userMenuTimeout, setUserMenuTimeout] = useState<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const { user, logout } = useAuthContext();
 
@@ -32,6 +34,21 @@ export default function Header({ products }: HeaderProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleUserMenuOpen = () => {
+    if (userMenuTimeout) {
+      clearTimeout(userMenuTimeout);
+      setUserMenuTimeout(null);
+    }
+    setIsUserMenuOpen(true);
+  };
+
+  const handleUserMenuClose = () => {
+    const timeout = setTimeout(() => {
+      setIsUserMenuOpen(false);
+    }, 300);
+    setUserMenuTimeout(timeout);
+  };
 
   return (
     <header className={`fixed w-full z-50 transition-all ${scrolled ? 'bg-blue-700 shadow-lg' : 'bg-blue-600'} text-white`}>
@@ -78,25 +95,46 @@ export default function Header({ products }: HeaderProps) {
               
               {/* Área de Autenticação Desktop */}
               {user ? (
-                <li className="relative group">
-                  <button className="flex items-center space-x-1 hover:text-blue-200">
+                <li 
+                  className="relative"
+                  onMouseEnter={handleUserMenuOpen}
+                  onMouseLeave={handleUserMenuClose}
+                >
+                  <button 
+                    className="flex items-center space-x-1 hover:text-blue-200"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  >
                     <UserIcon className="h-5 w-5" />
                     <span>{user.email}</span>
                   </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-md shadow-lg py-1 hidden group-hover:block">
-                    <Link 
-                      href="/profile" 
-                      className="block px-4 py-2 hover:bg-blue-50"
+                  {isUserMenuOpen && (
+                    <div 
+                      className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-md shadow-lg py-1"
+                      onMouseEnter={handleUserMenuOpen}
+                      onMouseLeave={handleUserMenuClose}
                     >
-                      Meu Perfil
-                    </Link>
-                    <button
-                      onClick={logout}
-                      className="w-full text-left px-4 py-2 hover:bg-blue-50"
-                    >
-                      Sair
-                    </button>
-                  </div>
+                      <Link 
+                        href="/profile" 
+                        className="block px-4 py-2 hover:bg-blue-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsUserMenuOpen(false);
+                        }}
+                      >
+                        Meu Perfil
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          logout();
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-50"
+                      >
+                        Sair
+                      </button>
+                    </div>
+                  )}
                 </li>
               ) : (
                 <li>
@@ -183,13 +221,17 @@ export default function Header({ products }: HeaderProps) {
                     <Link 
                       href="/profile" 
                       className={`block py-2 ${pathname === '/profile' ? 'font-bold bg-blue-500 rounded px-3' : 'hover:bg-blue-500 hover:rounded px-3'}`}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Meu Perfil
                     </Link>
                   </li>
                   <li>
                     <button
-                      onClick={logout}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        logout();
+                      }}
                       className="w-full text-left py-2 hover:bg-blue-500 hover:rounded px-3"
                     >
                       Sair
